@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Twitch API Project - Freecode Camp</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+</head>
+
+<body>
+
+    <!-- CSS COPY TO CODEPEN -->
+    <style>
+        img.small {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+    <!-- CSS COPY TO CODEPEN -->
+
+    <!-- HTML COPY TO CODEPEN -->
+
+    <div class="container">
+        <div class="streamers">
+            <div id="header">
+                <h1>Twitch Streamers</h1>
+                <ul class="menu">
+                    <li id="all">
+                        <span class="menu-img"></span> All</li>
+                    <li id="online">
+                        <span class="menu-img"></span> Online</li>
+                    <li id="offline">
+                        <span class="menu-img"></span> Offline</li>
+                </ul>
+            </div>
+            <div id="streams" class="container">
+                <!-- Add Stream Row Info HERE! -->
+            </div>
+            <div iod="footer">
+            </div>
+        </div>
+    </div>
+
+    <!-- / HTML COPY TO CODEPEN -->
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+    <!-- JS COPY TO CODEPEN -->
+    <script>
+
+        String.prototype.format = function () {
+            var formatted = this;
+            for (var arg in arguments) {
+                formatted = formatted.replace("{" + arg + "}", arguments[arg]);
+            }
+
+            return formatted;
+        }
+
+        var channels = ["jmsalcido", "batosjugando", "freecodecamp", "ninja"];
+        var apiUrl = "https://wind-bow.gomix.me/twitch-api";
+        var noImageUrl = "https://dummyimage.com/50x50/ecf0e7/5c5457.png&text=OFF";
+
+        $(document).ready(function () {
+            console.log('Sup m8, looking for these channels: {0}'.format(channels));
+
+            getAllFromAPI(true, true);
+        });
+
+        $("#all").click(function () {
+            $("#streams").html("");
+            getAllFromAPI(true, true);
+        });
+
+        $("#online").click(function () {
+            $("#streams").html("");
+            getAllFromAPI(true, false);
+        });
+
+        $("#offline").click(function () {
+            $("#streams").html("");
+            getAllFromAPI(false, true);
+        });
+
+        function getAllFromAPI(online, offline) {
+            channels.forEach(function (channelName) {
+                var streamUrl = buildUrl("streams", channelName);
+
+                console.log("requesting for: " + channelName);
+                $.ajax({
+                    type: "GET",
+                    url: streamUrl,
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("success call from API");
+
+                        if (data.stream) {
+                            if (online) {
+                                var stream = data.stream;
+
+                                // build the row for this little fucker
+                                var html = onlineStream(stream.channel);
+
+                                // append it to the streams div.
+                                $("#streams").prepend(html)
+                            }
+                        } else {
+                            if (offline) {
+                                console.log("No stream available, so this channel is OFFLINE or INEXISTENT");
+                                var channelUrl = buildUrl("channels", channelName)
+                                $.ajax({
+                                    type: "GET",
+                                    url: channelUrl,
+                                    dataType: "json",
+                                    success: successChannel
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function successChannel(data) {
+            console.log(data);
+            var html = offlineStream(data);
+
+            $("#streams").append(html)
+        }
+
+        function onlineStream(channel) {
+            return "<div class=\"online\"> "
+                + "<div class=\"row justify-content-md-center\">"
+                + "<div class=\"col col-lg-1\">"
+                + "<img class=\"rounded-circle small\" src=\"{0}\"/>".format(channel.logo)
+                + "</div>"
+                + "<div class=\"col\">"
+                + "<p>{0}</p>".format(channel.name)
+                + "</div>"
+                + "<div class=\"col\">"
+                + "<a href=\"{0}\"><p>{1}</p></a>".format(channel.url, channel.status)
+                + "</div>"
+                + "</div>"
+                + "</div>";
+        }
+
+        function offlineStream(channel) {
+            return "<div class=\"offline\"> "
+                + "<div class=\"row justify-content-md-center\">"
+                + "<div class=\"col col-lg-1\">"
+                + "<img class=\"rounded-circle small\" src=\"{0}\"/>".format(channel.logo)
+                + "</div>"
+                + "<div class=\"col\">"
+                + "<p>{0}</p>".format(channel.name)
+                + "</div>"
+                + "<div class=\"col\">"
+                + "Offline"
+                + "</div>"
+                + "</div>"
+                + "</div>";
+        }
+
+        function buildUrl(path, resource) {
+            return "{0}/{1}/{2}?callback=?".format(apiUrl, path, resource);
+        }
+
+    </script>
+
+    <!-- /JS COPY TO CODEPEN -->
+
+</body>
+
+</html>
